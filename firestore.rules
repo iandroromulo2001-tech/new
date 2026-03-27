@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: tickets
+    // Document ID: auto-generated
+    // Fields:
+    //   - client: string (required)
+    //   - contact: string (required)
+    //   - complaintDateTime: string (required, ISO 8601)
+    //   - responsible: string (required)
+    //   - status: string (required, enum)
+    //   - sector: string (required, enum)
+    //   - subticket: string (optional, enum)
+    //   - priority: string (optional, enum)
+    //   - description: string (required)
+    //   - solutionForecast: string (required)
+    //   - createdAt: timestamp (required)
+    //   - updatedAt: timestamp (required)
+    //   - comments: list (optional)
+    //
+    // Collection: users
+    // Document ID: userId (auth.uid)
+    // Fields:
+    //   - uid: string (required)
+    //   - username: string (required)
+    //   - password: string (required)
+    //   - name: string (required)
+    //   - email: string (optional)
+    //   - photoUrl: string (optional)
+    //   - notificationsEnabled: bool (optional)
+    //   - role: string (required, 'admin' | 'user')
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email == "iandroromulo2001@gmail.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'supervisao')
+      );
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && (
+        request.auth.uid == userId || 
+        (exists(/databases/$(database)/documents/users/$(userId)) && 
+         get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid)
+      );
+    }
+
+    function getUserCount() {
+      return exists(/databases/$(database)/documents/metadata/users) 
+        ? get(/databases/$(database)/documents/metadata/users).data.count 
+        : 0;
+    }
+
+    function isValidTicket(data) {
+      return data.client is string && data.client.size() > 0 &&
+             data.contact is string && data.contact.size() > 0 &&
+             data.status in ['Aberto', 'Em Atendimento', 'Aguardando Validação', 'Concluído', 'Cancelado'];
+    }
+
+    function isValidUser(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.username is string && data.username.size() > 0 &&
+             data.role in ['admin', 'user', 'supervisao'];
+    }
+
+    function isValidSupportMessage(data) {
+      return data.chatId is string && data.text is string && data.senderId is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /metadata/{metadataId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /support_messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if isAuthenticated(); // Temporarily allow all authenticated users to delete tickets
+    }
+  }
+}

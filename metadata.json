@@ -1,0 +1,8 @@
+{
+  "name": "Ticket Master",
+  "description": "Sistema de acompanhamento de chamados com painéis em tempo real e perfis de usuário.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

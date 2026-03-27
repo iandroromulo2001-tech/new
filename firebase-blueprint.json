@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "Ticket": {
+      "title": "Ticket",
+      "description": "A support ticket",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "client": { "type": "string" },
+        "contact": { "type": "string" },
+        "complaintDateTime": { "type": "string", "format": "date-time" },
+        "responsible": { "type": "string" },
+        "status": { "type": "string", "enum": ["Aberto", "Em Atendimento", "Aguardando Validação", "Concluído", "Cancelado"] },
+        "sector": { "type": "string", "enum": ["N2", "N3"] },
+        "subticket": { "type": "string", "enum": ["supervisao", "backoffice", "N3", ""] },
+        "priority": { "type": "string", "enum": ["Normal", "Médio", "Urgente"] },
+        "description": { "type": "string" },
+        "solutionForecast": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "comments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "text": { "type": "string" },
+              "author": { "type": "string" },
+              "createdAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "required": ["client", "contact", "complaintDateTime", "responsible", "status", "sector", "description", "solutionForecast"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "notificationsEnabled": { "type": "boolean" },
+        "role": { "type": "string", "enum": ["admin", "user", "supervisao"] },
+        "active": { "type": "boolean" }
+      },
+      "required": ["uid", "username", "password", "name", "role"]
+    },
+    "SupportMessage": {
+      "title": "SupportMessage",
+      "description": "A message in the support chat",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "chatId": { "type": "string" },
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderRole": { "type": "string", "enum": ["admin", "user"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "text", "senderId", "senderName", "senderRole", "createdAt"]
+    },
+    "Metadata": {
+      "title": "Metadata",
+      "description": "System metadata like counters",
+      "type": "object",
+      "properties": {
+        "count": { "type": "integer" }
+      },
+      "required": ["count"]
+    }
+  },
+  "firestore": {
+    "/tickets/{ticketId}": {
+      "schema": "Ticket",
+      "description": "Collection of support tickets"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile data"
+    },
+    "/support_messages/{messageId}": {
+      "schema": "SupportMessage",
+      "description": "Collection of support chat messages"
+    },
+    "/metadata/{metadataId}": {
+      "schema": "Metadata",
+      "description": "System metadata collection"
+    }
+  }
+}
